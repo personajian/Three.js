@@ -150,7 +150,7 @@
          * @param isExistHxl:是否存在横系梁 1表示存在，0表示不存在
          * @param zzlx:0表示连续，1表示简支
          */
-        drawBridgeWidgets(10, 2, 3, 1, 0);
+        drawBridgeWidgets(10, 4, 2, 1, 0);
 
         //添加坐标轴
         var axes = new THREE.AxisHelper(1000);
@@ -261,11 +261,11 @@
 
 
         //设置底板的长宽高
-        var BOTTOMCUBEX = LENGTH, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
+        var BOTTOMCUBEX = LENGTH+40, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
 
         //设置梯台翼班的长宽高
         //var HALFPACEBOTTOMRADIUS = LENGTH/Math.pow(2,0.5),HALFPACETOPRADIUS =HALFPACEBOTTOMRADIUS+20, HALFPACEY = YOFFSET, HALFPACEZ = 20;
-        var HALFPACEX = LENGTH, HALFPACEY = YOFFSET, HALFPACEZ = 20;
+        var HALFPACEX = LENGTH+40, HALFPACEY = YOFFSET, HALFPACEZ = 20;
 
         //设置顶板的长宽高
         var TOPCUBEX = HALFPACEX*1.4, TOPCUBEY = HALFPACEY, TOPCUBEZ = 20;
@@ -323,6 +323,7 @@
 
         //左侧桥台台身初始坐标
         var initQttsX = -((BOTTOMCUBEX - LENGTH) / 2 - QTTSX / 2) - ORIGINALX,initQttsZ = (GLZ + ZZHEIGHT) / 2;
+
         //右侧桥台台身X轴坐标
         var initRightQttsX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - QTTSX / 2) - ORIGINALX;
 
@@ -397,12 +398,12 @@
         //设置梯台翼的颜色
         var hapfpaceMaterialArray = [];
         // order to add materials: x+,x-,y+,y-,z+,z-
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));//上下
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
 
         //设置底板的颜色
         var bottomCubeMaterialArray = [];
@@ -554,7 +555,7 @@
 
                 /**==============添加桥台构件包括（桥台台帽、桥台台身前墙、桥台台身侧墙、桥台台背）==============**/
                     //添加左侧桥台台身
-                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                /*var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
                 var cubeGeometry = new THREE.CubeGeometry(QTTSX, QTTSZ, QTTSY, 1, 1, 1);
                 cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
                 cube.position.set(initQttsX, initQttbZ, firstQttsY);
@@ -585,7 +586,7 @@
                 cubeGeometry = new THREE.CubeGeometry(LMX, LMZ, LMY, 1, 1, 1);
                 cube = new THREE.Mesh(cubeGeometry, lmMaterials);
                 cube.position.set(initLmx, initLmZ, firstLmY);
-                scene.add(cube);
+                scene.add(cube);*/
 
                 /** ===========添加桥台构件部分结束======================================**/
 
@@ -830,7 +831,7 @@
             geometry.faces.push(new THREE.Face3(5, 4, 0));
             geometry.faces.push(new THREE.Face3(0, 1, 5));
             //var material = new THREE.MeshBasicMaterial({color: 0x0000FF} );
-            //var testMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+            var cubeMaterials = new THREE.MeshFaceMaterial(hapfpaceMaterialArray);
             var smallTrapezoid = new THREE.Mesh(geometry, cubeMaterials);
             smallTrapezoid.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
             scene.add(smallTrapezoid);

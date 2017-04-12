@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>现浇实心板梁</title>
+    <title>现浇实心板梁加桥台</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <!-- <link rel=stylesheet href="css/base.css"/> -->
@@ -22,13 +22,14 @@
 </head>
 <body>
 
-<script src="three.js"></script>
+<script src="js/three.js"></script>
 <script src="js/Detector.js"></script>
 <script src="js/Stats.js"></script>
 <script src="js/OrbitControls.js"></script>
 <script src="js/THREEx.KeyboardState.js"></script>
 <script src="js/THREEx.FullScreen.js"></script>
 <script src="js/THREEx.WindowResize.js"></script>
+<script src="js/TrackballControls.js"></script>
 
 <!-- jQuery code to display an information button and box when clicked. -->
 <script src="js/jquery-1.9.1.js"></script>
@@ -36,6 +37,7 @@
 <link rel=stylesheet href="css/jquery-ui.css"/>
 <link rel=stylesheet href="css/info.css"/>
 <script src="js/info.js"></script>
+<script src="js/stats.min.js"></script>
 <!-- ------------------------------------------------------------ -->
 
 <div id="container"></div>
@@ -51,8 +53,8 @@
 
 // standard global variables
     var container, scene, camera, renderer, controls, stats;
-    var keyboard = new THREEx.KeyboardState();
-    var clock = new THREE.Clock();
+    var raycaster;
+    var mouse = new THREE.Vector2(), INTERSECTED;
 
     // custom global variables
     var cube;
@@ -79,17 +81,18 @@
         /**
          * Scene(场景)、Camera(相机)、Renderer(渲染器)
          */
-            // set the view size in pixels (custom or according to window size)
-            // var SCREEN_WIDTH = 400, SCREEN_HEIGHT = 300;
+                // set the view size in pixels (custom or according to window size)
+                // var SCREEN_WIDTH = 400, SCREEN_HEIGHT = 300;
         var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
         // camera attributes
-        var VIEW_ANGLE = 90, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+        var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
         // set up camera
         camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
         // add the camera to the scene
         scene.add(camera);
         // the camera defaults to position (0,0,0)
         // 	so pull it back (z = 400) and up (y = 100) and set the angle towards the scene origin
+//        camera.position.set(0, 0, 0);
         camera.position.set(-100, 100, 400);
         camera.lookAt(scene.position);
 
@@ -112,7 +115,7 @@
         //    document.body.appendChild( container );
 
         // attach renderer to the container div
-        container.appendChild(renderer.domElement);
+        //container.appendChild(renderer.domElement);
 
         ////////////
         // EVENTS //
@@ -147,37 +150,99 @@
          * @param isExistHxl:是否存在横系梁 1表示存在，0表示不存在
          * @param zzlx:0表示连续，1表示简支
          */
-        drawBridgeWidgets(10, 6, 2, 1, 1);
+        drawBridgeWidgets(10, 4, 2, 1, 0);
 
         //添加坐标轴
         var axes = new THREE.AxisHelper(1000);
         scene.add(axes);
+
+        //给各个构件添加点击事件
+        raycaster = new THREE.Raycaster();
+        renderer.setClearColor( 0xffffff );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.sortObjects = false;
+        container.appendChild(renderer.domElement);
+
+        stats = new Stats();
+        container.appendChild( stats.dom );
+
+        document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
 
     }
 
     function animate() {
         requestAnimationFrame(animate);
         render();
-        update();
+        stats.update();
+
     }
+
+
+    function render() {
+        controls.update();
+        renderer.render(scene, camera);
+
+    }
+
+    /*function animate() {
+        requestAnimationFrame(animate);
+        render();
+        update();
+    }*/
 
     function update() {
         // delta = change in time since last call (in seconds)
         var delta = clock.getDelta();
 
         // functionality provided by THREEx.KeyboardState.js
-        /* if (keyboard.pressed("1"))
-         document.getElementById('message').innerHTML = ' Have a nice day! - 1';
-         if (keyboard.pressed("2"))
-         document.getElementById('message').innerHTML = ' Have a nice day! - 2 ';*/
+       /* if (keyboard.pressed("1"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 1';
+        if (keyboard.pressed("2"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 2 ';*/
 
         controls.update();
         //stats.update();
     }
 
-    function render() {
+   /* function render() {
         renderer.render(scene, camera);
+    }*/
+
+
+    function onDocumentMouseMove( event ) {
+        event.preventDefault();
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        var intersects = raycaster.intersectObjects(scene.children);
+
+        if (intersects.length > 1) {
+            var intersect = intersects[0];
+            //	alert(intersects[ 0 ].object.name);
+            // delete cube
+            //	intersects[ 0 ].object.material=new THREE.MeshLambertMaterial( { color: 0x797775 } );
+            render();
+
+        }
     }
+
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+        mouse.set(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            var intersect = intersects[0];
+            //alert(intersects[0].object.name);
+            // delete cube
+            tempObject = intersects[0].object;
+            tempObjectMaterial = intersects[0].object.material;
+            intersects[0].object.material = new THREE.MeshBasicMaterial( { color: 0xFF311B});
+            render();
+        }
+    }
+
 
     /**
      * 设置一个桥梁部件的函数
@@ -192,18 +257,18 @@
         var LENGTH = 300;
 
         //Y轴方向每次增加的长度
-        var YOFFSET = 300;
+        var YOFFSET = 120;
 
 
         //设置底板的长宽高
-        var BOTTOMCUBEX = LENGTH, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
+        var BOTTOMCUBEX = LENGTH+40, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
 
         //设置梯台翼班的长宽高
         //var HALFPACEBOTTOMRADIUS = LENGTH/Math.pow(2,0.5),HALFPACETOPRADIUS =HALFPACEBOTTOMRADIUS+20, HALFPACEY = YOFFSET, HALFPACEZ = 20;
-        var HALFPACEX = LENGTH, HALFPACEY = YOFFSET, HALFPACEZ = 20;
+        var HALFPACEX = LENGTH+40, HALFPACEY = YOFFSET, HALFPACEZ = 20;
 
         //设置顶板的长宽高
-        var TOPCUBEX = HALFPACEX*1.4, TOPCUBEY = HALFPACEY, TOPCUBEZ = 20;
+        var TOPCUBEX = HALFPACEX, TOPCUBEY = HALFPACEY, TOPCUBEZ = 40;
 
         //腹板的长宽高
         var ABDOMENX = 10, ABDOMENY = YOFFSET, ABDOMENZ = 25;
@@ -220,10 +285,10 @@
 
         //设置盖梁的长宽高
         var GLX = BOTTOMCUBEX, GLY = TOPCYLINDERRADIUS * 2, GLZ = 10;
-        
+
         //设置桥头桥尾包边的长宽高
         var QTQWX = 10, QTQWY = GLY, QTQWZ = GLZ + BOTTOMCUBEZ;
-        
+
         //支座的长宽高
         if(0 == zzlx){
             var TOPZZRADIUS = 20, BOTTOMZZRADIUS = 20, ZZHEIGHT = 3;
@@ -238,19 +303,46 @@
         //设置横系梁的长宽高
         var HXLX = LENGTH, HXLY = 15, HXLZ = 15;
 
+        //桥台台身前墙的长宽高
+        var QTTSQQX =BOTTOMCUBEX, QTTSQQY = TOPCYLINDERRADIUS * 2, QTTSQQZ = HEIGHT;
+
+        //桥台台身的长宽高
+        var QTTSX = 20, QTTSY = YOFFSET, QTTSZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ;
+
+        //桥台台背长宽高
+        var QTTBX = BOTTOMCUBEX, QTTBY = TOPCYLINDERRADIUS, QTTBZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ;
+
+        //路面
+        var LMX = TOPCUBEX, LMY = YOFFSET + QTTBY,LMZ = TOPCUBEZ;
+
+
+        //原点的Y坐标
         var ORIGINALY = YOFFSET * ksNum / 2;
+        //原点的X坐标
         var ORIGINALX = LENGTH / 2;
 
+        //左侧桥台台身初始坐标
+        var initQttsX = -((BOTTOMCUBEX - LENGTH) / 2 - QTTSX / 2) - ORIGINALX,initQttsZ = (GLZ + ZZHEIGHT) / 2;
+
+        //右侧桥台台身X轴坐标
+        var initRightQttsX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - QTTSX / 2) - ORIGINALX;
+
+        //左侧桥台台背初始坐标
+        var initQttbX = 0,initQttbZ = (GLZ + ZZHEIGHT+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ) / 2;
+
+        //路面的坐标
+        var initLmx = LENGTH / 2 - ORIGINALX,initLmZ = HEIGHT / 2 + GLZ + ZZHEIGHT + BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ+LMZ / 2;
+
         //桥墩的初始位置
-        var initCylinderX = -(ORIGINALX)+TOPCYLINDERRADIUS, initCylinderY = -ORIGINALY, initCylinderZ = 0;
+        var initCylinderX = -ORIGINALX, initCylinderY = -ORIGINALY, initCylinderZ = 0;
         //设置每个桥墩之间的间隔位置
         var qdXOffset = LENGTH / (qdNum - 1);
 
-        //侧墙
-        var initCqX = -((TOPCUBEX - LENGTH) / 2 - CQX / 2) - ORIGINALX, initCqY = YOFFSET / 2 - ORIGINALY, initCqZ = HEIGHT / 2 +CQZ/2 + HALFPACEZ + TOPCUBEZ + BOTTOMCUBEZ + ABDOMENZ + GLZ + ZZHEIGHT;
+        //侧墙(比顶板要多出来)
+        var initCqX = -((TOPCUBEX+120 - LENGTH) / 2 - CQX / 2) - ORIGINALX, initCqY = YOFFSET / 2 - ORIGINALY, initCqZ = HEIGHT / 2 +CQZ/2  + TOPCUBEZ + BOTTOMCUBEZ + ABDOMENZ + GLZ + ZZHEIGHT;
 
         //顶板的初始位置
-        var initTopCubeX = LENGTH / 2 - ORIGINALX, initTopCubeY = YOFFSET / 2 - ORIGINALY, initTopCubeZ = HEIGHT / 2 + TOPCUBEZ/2+ HALFPACEZ +ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
+        var initTopCubeX = LENGTH / 2 - ORIGINALX, initTopCubeY = YOFFSET / 2 - ORIGINALY, initTopCubeZ = HEIGHT / 2 + TOPCUBEZ/2/*+ HALFPACEZ*/ +ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
 
         //梯台翼的初始位置
         var initHalfpaceX = LENGTH / 2 - ORIGINALX-HALFPACEX/2, initHalfpaceY = YOFFSET / 2 - ORIGINALY-HALFPACEY/2, initHalfpaceZ = HEIGHT / 2 + ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
@@ -268,7 +360,7 @@
         var initQtqwX = -((BOTTOMCUBEX - LENGTH) / 2 + QTQWX / 2) - ORIGINALX, initQtqwY = -ORIGINALY, initQtqwZ = HEIGHT / 2 + (BOTTOMCUBEZ + GLZ) / 2;
 
         //右侧墙跟左侧墙的X轴的坐标不一样
-        var initRightCqX = LENGTH + ((TOPCUBEX - LENGTH) / 2 - CQX / 2) - ORIGINALX;
+        var initRightCqX = LENGTH + ((TOPCUBEX+120 - LENGTH) / 2 - CQX / 2) - ORIGINALX;
 
         //右腹板跟左腹板的X轴的坐标不一样
         var initRightAbdomenX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - ABDOMENX / 2) - ORIGINALX;
@@ -276,7 +368,7 @@
         var initRightQtqwX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 + QTQWX / 2) - ORIGINALX;
 
         //支座的坐标
-        var initZzX = -(ORIGINALX-TOPZZRADIUS), initZzY = -ORIGINALY, initZzZ = HEIGHT / 2 + GLZ + ZZHEIGHT / 2;
+        var initZzX = -ORIGINALX, initZzY = -ORIGINALY, initZzZ = HEIGHT / 2 + GLZ + ZZHEIGHT / 2;
         //每个支座X轴方向上的间隔距离
         var zzXOffset = LENGTH / (zzNum - 1);
 
@@ -306,12 +398,12 @@
         //设置梯台翼的颜色
         var hapfpaceMaterialArray = [];
         // order to add materials: x+,x-,y+,y-,z+,z-
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));//上下
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
 
         //设置底板的颜色
         var bottomCubeMaterialArray = [];
@@ -346,6 +438,16 @@
         hxlMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x292827}));
         var hxlMaterials = new THREE.MeshFaceMaterial(hxlMaterialArray);
 
+        //设置桥台路面的背景
+        var lmMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x363533}));//上下
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x363533}));
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x292827}));//前后
+        lmMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x292827}));
+        var lmMaterials = new THREE.MeshFaceMaterial(lmMaterialArray);
 
 
         //设置侧墙的各部分的颜色
@@ -357,6 +459,16 @@
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+
+        //设置侧墙的各部分的颜色
+        var cqMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
 
 
         //设置盖梁的各部分的颜色
@@ -384,6 +496,9 @@
         var firstQtqwY = 0;
         var firstZzY = 0;
         var firstHxlY = 0;
+        var firstQttsY = 0;
+        var firstQttbY = 0;
+        var firstLmY = 0;
         for (var i = 0; i < ksNum + 1; i++) {
             //第一个和最后圆柱对应的Y轴坐标一个要往里面收一点，一个要往外放一点。这样才不会让第一个和最后一个的圆柱往外露
             if (0 == i || ksNum == i) {
@@ -394,6 +509,13 @@
                     firstQtqwY = initQtqwY + GLY / 2;
                     firstZzY = initZzY + TOPCYLINDERRADIUS;
                     firstHxlY = initHxlY + TOPCYLINDERRADIUS;
+                    //桥台台身Y轴坐标
+                    firstQttsY = -ORIGINALY - QTTSY / 2;
+                    //桥台台背的Y轴坐标
+                    firstQttbY = -ORIGINALY - QTTSY - QTTBY / 2;
+                    //桥台路面Y轴的坐标
+                    firstLmY = -ORIGINALY - LMY / 2;
+
 
                 } else if (ksNum == i) {
                     //最后一个墩柱，也需要板梁将整个墩柱包住，所以需要将墩柱的原点往里面缩一点
@@ -402,27 +524,72 @@
                     firstQtqwY = initQtqwY - GLY / 2;
                     firstZzY = initZzY - TOPCYLINDERRADIUS;
                     firstHxlY = initHxlY - TOPCYLINDERRADIUS;
+                    //桥台台身Y轴坐标
+                    firstQttsY = ORIGINALY + QTTSY / 2;
+                    //桥台台背的Y轴坐标
+                    firstQttbY = ORIGINALY + QTTSY + QTTBY / 2;
+
+                    //桥台路面Y轴的坐标
+                    firstLmY = ORIGINALY + LMY / 2;
                 }
 
+                /*                if(1 == qdNum){
+                 //如果桥墩数量为1,单独给它设置样式
+                 var cubeGeometry = new THREE.CubeGeometry(SINGLEQDX, SINGLEQDZ, SINGLEQDY, 1, 1, 1);
+                 cube = new THREE.Mesh(cubeGeometry, hxlMaterials);
+                 cube.position.set(initCylinderX + LENGTH / 2, initCylinderZ, firstCylinderY);
+                 scene.add(cube);
+                 }else{
+                 //添加第一个和最后一个桥墩
+                 for(var qd = 0; qd < qdNum;qd++){
+                 var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
+                 var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                 cylinder.position.set(initCylinderX, initCylinderZ, firstCylinderY);
+                 scene.add(cylinder);
+                 initCylinderX += qdXOffset;
+                 }
+                 //每一个循环做完之后，将X轴坐标置为0
+                 initCylinderX = -ORIGINALX;
+                 }*/
 
-                if(1 == qdNum){
-                    //如果桥墩数量为1,单独给它设置样式
-                    var cubeGeometry = new THREE.CubeGeometry(SINGLEQDX, SINGLEQDZ, SINGLEQDY, 1, 1, 1);
-                    cube = new THREE.Mesh(cubeGeometry, hxlMaterials);
-                    cube.position.set(initCylinderX + LENGTH / 2, initCylinderZ, firstCylinderY);
-                    scene.add(cube);
-                }else{
-                    //添加第一个和最后一个桥墩
-                    for(var qd = 0; qd < qdNum;qd++){
-                        var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
-                        var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-                        cylinder.position.set(initCylinderX, initCylinderZ, firstCylinderY);
-                        scene.add(cylinder);
-                        initCylinderX += qdXOffset;
-                    }
-                    //每一个循环做完之后，将X轴坐标置为0
-                    initCylinderX = -ORIGINALX;
-                }
+
+                /**==============添加桥台构件包括（桥台台帽、桥台台身前墙、桥台台身侧墙、桥台台背）==============**/
+                    //添加左侧桥台台身
+                /*var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(QTTSX, QTTSZ, QTTSY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(initQttsX, initQttbZ, firstQttsY);
+                scene.add(cube);
+
+                //添加右侧桥台台身
+                cubeGeometry = new THREE.CubeGeometry(QTTSX, QTTSZ, QTTSY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(initRightQttsX, initQttbZ, firstQttsY);
+                scene.add(cube);
+
+
+                //添加台背
+                cubeGeometry = new THREE.CubeGeometry(QTTBX, QTTBZ, QTTBY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(initQttbX, initQttbZ, firstQttbY);
+                scene.add(cube);
+
+
+                //添加桥台台身前墙
+                cubeGeometry = new THREE.CubeGeometry(QTTSQQX, QTTSQQZ, QTTSQQY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, hxlMaterials);
+                cube.position.set(initCylinderX + LENGTH / 2, initCylinderZ, firstCylinderY);
+                scene.add(cube);
+
+
+                //添加桥台的路面
+                cubeGeometry = new THREE.CubeGeometry(LMX, LMZ, LMY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, lmMaterials);
+                cube.position.set(initLmx, initLmZ, firstLmY);
+                scene.add(cube);*/
+
+                /** ===========添加桥台构件部分结束======================================**/
+
 
                 /*//两个墩柱
                  var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
@@ -443,19 +610,19 @@
                 cube.position.set(initGlX, initGlZ, firstGlY);
                 scene.add(cube);
 
-                //左桥头
-                var cubeMaterials = new THREE.MeshFaceMaterial(abdomenMaterialArray);
-                var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
-                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
-                cube.position.set(initQtqwX, initQtqwZ, firstQtqwY);
-                scene.add(cube);
+                /*//左桥头
+                 var cubeMaterials = new THREE.MeshFaceMaterial(abdomenMaterialArray);
+                 var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
+                 cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                 cube.position.set(initQtqwX, initQtqwZ, firstQtqwY);
+                 scene.add(cube);
 
-                //右桥头
-                var cubeMaterials = new THREE.MeshFaceMaterial(abdomenMaterialArray);
-                var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
-                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
-                cube.position.set(initRightQtqwX, initQtqwZ, firstQtqwY);
-                scene.add(cube);
+                 //右桥头
+                 var cubeMaterials = new THREE.MeshFaceMaterial(abdomenMaterialArray);
+                 var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
+                 cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                 cube.position.set(initRightQtqwX, initQtqwZ, firstQtqwY);
+                 scene.add(cube);*/
 
                 //如果只做类型是连续的话
                 if(0 == zzlx){
@@ -477,15 +644,15 @@
                  cube.position.set(initZzX + LENGTH,initZzZ,firstZzY);
                  scene.add(cube);*/
 
-                if(isExistHxl){
-                    //横系梁
-                    if(2 == qdNum){
-                        var cubeGeometry = new THREE.CubeGeometry(HXLX, HXLZ, HXLY, 1, 1, 1);
-                        cube = new THREE.Mesh(cubeGeometry, hxlMaterials);
-                        cube.position.set(initHxlX, initHxlZ, firstHxlY);
-                        scene.add(cube);
-                    }
-                }
+                /*if(isExistHxl){
+                 //横系梁
+                 if(2 == qdNum){
+                 var cubeGeometry = new THREE.CubeGeometry(HXLX, HXLZ, HXLY, 1, 1, 1);
+                 cube = new THREE.Mesh(cubeGeometry, hxlMaterials);
+                 cube.position.set(initHxlX, initHxlZ, firstHxlY);
+                 scene.add(cube);
+                 }
+                 }*/
 
             } else {
                 //添加中间的桥墩
@@ -608,26 +775,26 @@
          */
         /*for (var i = 0; i < ksNum; i++) {
 
-            var cubeMaterials = new THREE.MeshFaceMaterial( halfpaceMaterial );
-            var cubeGeometry=new THREE.CylinderGeometry(HALFPACETOPRADIUS, HALFPACEBOTTOMRADIUS, HALFPACEZ, 4 );
-            cube = new THREE.Mesh(cubeGeometry,cubeMaterials);
-            cube.rotation.y=Math.PI/4;
-            cube.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
-            scene.add(cube);
-            initHalfpaceY += YOFFSET;
+         var cubeMaterials = new THREE.MeshFaceMaterial( halfpaceMaterial );
+         var cubeGeometry=new THREE.CylinderGeometry(HALFPACETOPRADIUS, HALFPACEBOTTOMRADIUS, HALFPACEZ, 4 );
+         cube = new THREE.Mesh(cubeGeometry,cubeMaterials);
+         cube.rotation.y=Math.PI/4;
+         cube.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
+         scene.add(cube);
+         initHalfpaceY += YOFFSET;
 
-        }*/
+         }*/
         /*for(var i=0;i<ksNum;i++) {
-            var sphere = new THREE.Mesh(
-                new THREE.CylinderGeometry((LENGTH + 20) / Math.pow(2, 0.5), LENGTH / Math.pow(2, 0.5), HALFPACEZ, 4),                //width,height,depth
-                new THREE.MeshBasicMaterial({color: 0x092026}) //材质设定
-            );
-            sphere.rotation.y = Math.PI / 4;
-            sphere.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
-            scene.add(sphere);
-            initHalfpaceY += YOFFSET;
-        }*/
-        for(var i=0;i<ksNum;i++){
+         var sphere = new THREE.Mesh(
+         new THREE.CylinderGeometry((LENGTH + 20) / Math.pow(2, 0.5), LENGTH / Math.pow(2, 0.5), HALFPACEZ, 4),                //width,height,depth
+         new THREE.MeshBasicMaterial({color: 0x092026}) //材质设定
+         );
+         sphere.rotation.y = Math.PI / 4;
+         sphere.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
+         scene.add(sphere);
+         initHalfpaceY += YOFFSET;
+         }*/
+        /*for(var i=0;i<ksNum;i++){
             //梯形
             // 初始化几何形状
             var geometry = new THREE.Geometry();
@@ -664,12 +831,12 @@
             geometry.faces.push(new THREE.Face3(5, 4, 0));
             geometry.faces.push(new THREE.Face3(0, 1, 5));
             //var material = new THREE.MeshBasicMaterial({color: 0x0000FF} );
-            //var testMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+            var cubeMaterials = new THREE.MeshFaceMaterial(hapfpaceMaterialArray);
             var smallTrapezoid = new THREE.Mesh(geometry, cubeMaterials);
             smallTrapezoid.position.set(initHalfpaceX, initHalfpaceZ, initHalfpaceY);
             scene.add(smallTrapezoid);
             initHalfpaceY += YOFFSET;
-        }
+        }*/
 
         /**
          * 添加底板
