@@ -1,0 +1,10 @@
+#hello{
+// order to add materials: x+,x-,y+,y-,z+,z-;
+    /*左右*/
+    color:#33ff33;
+    /*上下*/
+    color: #00FF66;
+
+    /*前后*/
+    color:#CCFF00;
+}

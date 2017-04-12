@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - interactive cubes (gpu)</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #f0f0f0;
+            margin: 0px;
+            overflow: hidden;
+        }
+
+        .info {
+            position: absolute;
+            background-color: black;
+            opacity: 0.8;
+            color: white;
+            text-align: center;
+            top: 0px;
+            width: 100%;
+        }
+
+        .info a {
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="info">
+    <a href="http://threejs.org" target="_blank">three.js</a> webgl - gpu picking
+</div>
+
+<div id="container"></div>
+
+<script src="three.js"></script>
+
+<script src="js/TrackballControls.js"></script>
+
+<script src="js/Detector.js"></script>
+
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+
+<!-- jQuery code to display an information button and box when clicked. -->
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/jquery-ui.js"></script>
+<link rel=stylesheet href="css/jquery-ui.css"/>
+<link rel=stylesheet href="css/info.css"/>
+<script src="js/info.js"></script>
+
+
+<script src="js/stats.min.js"></script>
+<script>
+
+    var container, stats;
+    var camera, controls, scene, renderer;
+    var pickingData = [], pickingTexture, pickingScene;
+    var objects = [];
+    var highlightBox;
+    var raycaster;
+    var tempObject;
+    var tempObjectMaterial;
+
+    var mouse = new THREE.Vector2();
+    var offset = new THREE.Vector3(10, 10, 10);
+
+    init();
+    animate();
+
+    function init() {
+
+        container = document.getElementById("container");
+
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.z = 1000;
+
+        controls = new THREE.TrackballControls(camera);
+        controls.rotateSpeed = 1.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.noZoom = false;
+        controls.noPan = false;
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        scene = new THREE.Scene();
+
+
+        pickingScene = new THREE.Scene();
+        pickingTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+        pickingTexture.texture.minFilter = THREE.LinearFilter;
+
+        scene.add(new THREE.AmbientLight(0x555555));
+
+
+        drawBridgeWidgets(7, 6, 3)
+
+
+        var axes = new THREE.AxisHelper(1000);
+        scene.add(axes);
+
+
+        raycaster = new THREE.Raycaster();
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setClearColor(0xffffff);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.sortObjects = false;
+        container.appendChild(renderer.domElement);
+
+        stats = new Stats();
+        container.appendChild(stats.dom);
+
+        //renderer.domElement.addEventListener('mousemove', onMouseMove, false);
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+      //  renderer.domElement.addEventListener('keydown', onDocumentKeyDown, false);
+       // renderer.domElement.addEventListener('keyup', onDocumentKeyUp, false);
+
+    }
+
+    //
+
+    function onMouseMove(e) {
+        event.preventDefault();
+        mouse.set(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children);
+        if (intersects.length > 1) {
+            var intersect = intersects[0];
+            //	alert(intersects[ 0 ].object.name);
+            // delete cube
+            //	intersects[ 0 ].object.material=new THREE.MeshLambertMaterial( { color: 0x797775 } );
+            render();
+        }
+
+    }
+
+
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+        mouse.set(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            var intersect = intersects[0];
+            alert(intersects[0].object.name);
+            // delete cube
+            tempObject = intersects[0].object;
+            tempObjectMaterial = intersects[0].object.material;
+            intersects[0].object.material = new THREE.MeshLambertMaterial({color: 0xCCFF00})
+            intersects[0].object.material = new THREE.MeshLambertMaterial({color: 0xCCFF00})
+            render();
+        }
+    }
+
+    function onDocumentKeyDown(event) {
+        switch (event.keyCode) {
+            case 16:
+                isShiftDown = true;
+                break;
+        }
+
+    }
+
+    function onDocumentKeyUp(event) {
+        switch (event.keyCode) {
+            case 16:
+                isShiftDown = false;
+                break;
+        }
+
+    }
+
+    function animate() {
+
+        requestAnimationFrame(animate);
+
+        render();
+        stats.update();
+
+    }
+
+
+    function render() {
+
+        controls.update();
+
+        renderer.render(scene, camera);
+
+    }
+
+
+    function drawBridgeWidgets(num, mum1, num2) {
+        //全局的长度
+        var LENGTH = 120;
+        //设置主梁上每一片的长度
+
+        var ZLPX = 80;
+
+        //设置主梁的长宽高
+        var CUBEX = mum1 * ZLPX, CUBEY = LENGTH, CUBEZ = 20;
+        //侧墙的长宽高
+        var CQX = 10, CQY = LENGTH, CQZ = 25;
+        //设置墩柱的长宽高
+        var TOPCYLINDERRADIUS = 10, BOTTOMCYLINDERRADIUS = 10, HEIGHT = 100;
+        //设置盖梁的长宽高
+        var GLX = CUBEX, GLY = TOPCYLINDERRADIUS * 2, GLZ = 10;
+
+        //相邻两个墩柱间距离
+        var length = (CUBEX - 20 * 2) / (num2 - 1);
+
+        //支座高半径
+        var TOP_ZZ_RADIUS = 5, BOTTOM_ZZ_RADIUS = 5, ZZ_HEIGHT = 5;
+
+        //设置桥头桥尾包边的长宽高
+        var QTQWX = 10, QTQWY = GLY, QTQWZ = GLZ + CUBEZ + ZZ_HEIGHT;
+
+
+        var OFFSET = LENGTH * num / 2;
+        //桥墩的初始位置
+        var initCylinderX = 0, initCylinderY = -OFFSET, initCylinderZ = 0;
+        //顶板的初始位置
+        var initCubeX = LENGTH / 2, initCubeY = LENGTH / 2 - OFFSET, initCubeZ = HEIGHT / 2 + CUBEZ / 2 + GLZ;
+        //侧墙的初始位置
+        var initCqX = -((CUBEX - LENGTH) / 2 - CQX / 2), initCqY = LENGTH / 2 - OFFSET, initCqZ = HEIGHT / 2 + CUBEZ + CQZ / 2 + GLZ;
+        //盖梁的初始位置
+        var initGlX = CUBEX / 2 - 20, initGlY = -OFFSET, initGlZ = HEIGHT / 2 + GLZ / 2;
+
+        //支座的初始位置
+        var initZZY = initGlY + BOTTOM_ZZ_RADIUS;
+
+        //桥头桥尾的初始位置
+        var initQtqwX = -((CUBEX - LENGTH) / 2 + QTQWX / 2), initQtqwY = -OFFSET, initQtqwZ = HEIGHT / 2 + QTQWZ / 2;
+
+        //右侧墙跟左侧墙的X轴的坐标不一样
+        var initRightCqX = LENGTH + ((CUBEX - LENGTH) / 2 - CQX / 2);
+        //右桥头的X轴不一样
+        var initRightQtqwX = LENGTH + ((CUBEX - LENGTH) / 2 + QTQWX / 2);
+
+        //设置主梁的颜色
+        var cubeMaterialArray = [];
+        // order to	add	materials: x+,x-,y+,y-,z+,z-
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));//上下
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x092026}));
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
+        cubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
+
+        //设置侧墙的各部分的颜色
+        var cqMaterialArray = [];
+        // order to	add	materials: x+,x-,y+,y-,z+,z-
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+
+
+        //设置侧墙的各部分的颜色
+        var glMaterialArray = [];
+        // order to	add	materials: x+,x-,y+,y-,z+,z-
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+
+
+        //支座的颜色装饰器
+        var zzMaterial = new THREE.MeshBasicMaterial({color: 0x3B0008});
+        /**
+         * 添加墩柱和盖梁
+         *
+         */
+        var firstCylinderY = 0;
+        var firstGlY = 0;
+        var firstQtqwY = 0;
+        for (var i = 0; i < num + 1; i++) {
+            if (0 == i || num == i) {
+                if (0 == i) {
+                    //第一个墩柱要让板梁整个包住墩柱，对应的盖梁也需要让板梁将盖梁包住
+                    firstCylinderY = initCylinderY + TOPCYLINDERRADIUS;
+                    firstGlY = initGlY + TOPCYLINDERRADIUS;
+                    firstQtqwY = initQtqwY + TOPCYLINDERRADIUS;
+
+
+                } else if (num == i) {
+                    //最后一个墩柱，也需要板梁将整个墩柱包住，所以需要将墩柱的原点往里面缩一点
+                    firstCylinderY = initCylinderY - TOPCYLINDERRADIUS;
+                    firstGlY = initGlY - TOPCYLINDERRADIUS;
+                    firstQtqwY = initQtqwY - TOPCYLINDERRADIUS;
+                }
+
+
+                var initCylinder_X = initCylinderX;
+                for (var j = 0; j < num2; j++) {
+                    //两个墩柱
+                    var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
+                    var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0x33ff33});
+                    var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                    cylinder.position.set(initCylinder_X, initCylinderZ, firstCylinderY);
+                    scene.add(cylinder);
+                    initCylinder_X += length;
+                }
+
+
+                var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
+                var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0x53ff33});
+                var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                cylinder.position.set(initCylinderX + CUBEX - 20 * 2, initCylinderZ, firstCylinderY);
+                scene.add(cylinder);
+
+                //桥头跟桥尾需要包边
+                //添加一个盖梁
+                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(GLX, GLZ, GLY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(initGlX, initGlZ, firstGlY);
+                scene.add(cube);
+
+                //左桥头
+                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(-25, initQtqwZ, firstQtqwY);
+                scene.add(cube);
+
+                //右桥头
+                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(QTQWX, QTQWZ, QTQWY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(CUBEX - 15, initQtqwZ, firstQtqwY);
+                scene.add(cube);
+
+            } else {
+                //添加两个墩柱
+
+
+                var initCylinder_X = initCylinderX;
+                for (var j = 0; j < num2; j++) {
+                    //两个墩柱
+                    var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
+                    var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0x33ff33});
+                    var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                    cylinder.position.set(initCylinder_X, initCylinderZ, initCylinderY);
+                    scene.add(cylinder);
+                    initCylinder_X += length;
+                }
+                var cylinderGeometry = new THREE.CylinderGeometry(TOPCYLINDERRADIUS, BOTTOMCYLINDERRADIUS, HEIGHT, 20, 4);
+                var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0x33ff33});
+                var cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+                cylinder.position.set(initCylinderX, initCylinderZ, initCylinderY);
+                scene.add(cylinder);
+
+
+                //添加一个盖梁
+                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(GLX, GLZ, GLY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(initGlX, initGlZ, initGlY);
+                scene.add(cube);
+            }
+            initGlY += LENGTH;
+            initCylinderY += LENGTH;
+            initQtqwY += LENGTH;
+        }
+
+
+        for (var i = 0; i < num; i++) {
+            var UPPER_X = ZLPX / 2 - 20, DOWN_X = ZLPX / 2 - 20, LEFT_X = -15, RIGHT_X = -15 + ZLPX - 10, ZZ_X = -12.5;
+            for (var j = 0; j < mum1; j++) {
+                //上
+                var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(ZLPX, 6, CUBEY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(UPPER_X, HEIGHT / 2 + QTQWZ - 6 / 2, initCubeY);
+                cube.name = "zlbh: " + (i + 1) + "-" + (j + 1);
+                scene.add(cube);
+                //下
+                var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(ZLPX, 6, CUBEY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(DOWN_X, HEIGHT / 2 + GLZ + 6 / 2 + ZZ_HEIGHT, initCubeY);
+                cube.name = "zlbh： " + (i + 1) + "-" + (j + 1);
+                scene.add(cube);
+                //左
+                var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(10, CUBEZ - 6 * 2, CUBEY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(LEFT_X, HEIGHT / 2 + GLZ + CUBEZ / 2 + ZZ_HEIGHT, initCubeY);
+                cube.name = "zlbh: " + (i + 1) + "-" + (j + 1);
+                scene.add(cube);
+                //右
+                var cubeMaterials = new THREE.MeshFaceMaterial(cubeMaterialArray);
+                var cubeGeometry = new THREE.CubeGeometry(10, CUBEZ - 6 * 2, CUBEY, 1, 1, 1);
+                cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cube.position.set(RIGHT_X, HEIGHT / 2 + GLZ + CUBEZ / 2 + ZZ_HEIGHT, initCubeY);
+                cube.name = "zlbh：" + (i + 1) + "-" + (j + 1);
+                scene.add(cube);
+
+
+                UPPER_X += ZLPX + 0.1;
+                DOWN_X += ZLPX + 0.1;
+                LEFT_X += ZLPX + 0.1;
+                RIGHT_X += ZLPX + 0.1;
+
+            }
+            initCubeY += LENGTH;
+
+        }
+
+
+        /**
+         * 添加支座
+         */
+
+        for (var i = 0; i <= num; i++) {
+
+            var ZZ_X = -12.5
+            for (var j = 0; j < mum1; j++) {
+
+                //每一片的支座1
+                var cylinderGeometry = new THREE.CylinderGeometry(TOP_ZZ_RADIUS, BOTTOM_ZZ_RADIUS, ZZ_HEIGHT, 20, 4);
+                var cylinder = new THREE.Mesh(cylinderGeometry, zzMaterial);
+                cylinder.position.set(ZZ_X, HEIGHT / 2 + GLZ + ZZ_HEIGHT / 2, initZZY);
+                cylinder.name = "zz: " + (i + 1) + "-" + (j + 1) + "-" + "1";
+                scene.add(cylinder);
+
+                //每一片的支座2
+                var cylinderGeometry = new THREE.CylinderGeometry(TOP_ZZ_RADIUS, BOTTOM_ZZ_RADIUS, ZZ_HEIGHT, 20, 4);
+                var cylinder = new THREE.Mesh(cylinderGeometry, zzMaterial);
+                cylinder.position.set(ZZ_X + 65, HEIGHT / 2 + GLZ + ZZ_HEIGHT / 2, initZZY);
+                cylinder.name = "zz: " + (i + 1) + "-" + (j + 1) + "-" + "2";
+                scene.add(cylinder);
+                ZZ_X += ZLPX + 0.1;
+            }
+
+            if (0 == i) {
+                initZZY += LENGTH - 5;
+            } else if (num - 1 == i) {
+
+                initZZY += LENGTH - 5;
+            } else {
+                initZZY += LENGTH;
+            }
+        }
+
+        /**
+         * 添加两边的侧墙
+         */
+        for (var i = 0; i < num; i++) {
+            //添加一个左侧墙
+            var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+            // Cube parameters: width (x), height (y), depth (z),
+            var cubeGeometry = new THREE.CubeGeometry(CQX, CQZ, CQY, 1, 1, 1);
+            // using THREE.MeshFaceMaterial() in the constructor below
+            //   causes the mesh to use the materials stored in the geometry
+            cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+            cube.position.set(-5, initCqZ, initCqY);
+            scene.add(cube);
+
+            //添加一个右侧墙
+            var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+            // Cube parameters: width (x), height (y), depth (z),
+            var cubeGeometry = new THREE.CubeGeometry(CQX, CQZ, CQY, 1, 1, 1);
+            // using THREE.MeshFaceMaterial() in the constructor below
+            //   causes the mesh to use the materials stored in the geometry
+            cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+            cube.position.set(initCylinderX + CUBEX - 20 * 2 + 5, initCqZ, initCqY);
+            scene.add(cube);
+            initCqY += LENGTH;
+        }
+
+    }
+
+
+</script>
+
+</body>
+</html>
