@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>现浇实心板梁加桥台</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <!-- <link rel=stylesheet href="css/base.css"/> -->
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #container {
+            background-color: #ffffff;
+            z-index: 1;
+            position: absolute;
+            left: 0px;
+            top: 0px
+        }
+    </style>
+</head>
+<body>
+
+<script src="js/three.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/Stats.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script src="js/THREEx.KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+<script src="js/TrackballControls.js"></script>
+
+<!-- jQuery code to display an information button and box when clicked. -->
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/jquery-ui.js"></script>
+<link rel=stylesheet href="css/jquery-ui.css"/>
+<link rel=stylesheet href="css/info.css"/>
+<script src="js/info.js"></script>
+<script src="js/stats.min.js"></script>
+<!-- ------------------------------------------------------------ -->
+
+<div id="container"></div>
+<script>
+    /**
+     * three.js开发的五个步骤：
+     * 1、设置three.js渲染器
+     * 2、设置摄像机camera
+     * 3、设置场景scene
+     * 4、设置光源light
+     * 5、设置物体object
+     */
+
+// standard global variables
+    var container, scene, camera, renderer, controls, stats;
+    var raycaster;
+    var mouse = new THREE.Vector2(), INTERSECTED;
+
+    // custom global variables
+    var cube;
+
+    // initialization
+    init();
+
+    // animation loop / game loop
+    animate();
+
+    ///////////////
+    // FUNCTIONS //
+    ///////////////
+    function init() {
+        ///////////
+        // SCENE //
+        ///////////
+        scene = new THREE.Scene();
+        //scene.background = new THREE.Color(0xffffff);
+
+        ////////////
+        // CAMERA //
+        ////////////
+        /**
+         * Scene(场景)、Camera(相机)、Renderer(渲染器)
+         */
+                // set the view size in pixels (custom or according to window size)
+                // var SCREEN_WIDTH = 400, SCREEN_HEIGHT = 300;
+        var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+        // camera attributes
+        var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+        // set up camera
+        camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+        // add the camera to the scene
+        scene.add(camera);
+        // the camera defaults to position (0,0,0)
+        // 	so pull it back (z = 400) and up (y = 100) and set the angle towards the scene origin
+//        camera.position.set(0, 0, 0);
+        camera.position.set(-100, 100, 400);
+        camera.lookAt(scene.position);
+
+        //////////////
+        // RENDERER //
+        //////////////
+        // create and start the renderer; choose antialias setting.
+        if (Detector.webgl)
+        //设置为圆滑过渡，并且是透明的
+            renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+        else
+            renderer = new THREE.CanvasRenderer();
+
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+        // attach div element to variable to contain the renderer
+        container = document.getElementById('container');
+        // alternatively: to create the div at runtime, use:
+        //   container = document.createElement( 'div' );
+        //    document.body.appendChild( container );
+
+        // attach renderer to the container div
+        //container.appendChild(renderer.domElement);
+
+        ////////////
+        // EVENTS //
+        ////////////
+        // automatically resize renderer
+        THREEx.WindowResize(renderer, camera);
+        // toggle full-screen on given key press
+        THREEx.FullScreen.bindKey({charCode: 'm'.charCodeAt(0)});
+
+        //////////////
+        // CONTROLS可以来控制鼠标移动以及放大缩小
+        //////////////
+        // move mouse and: left   click to rotate,
+        //                 middle click to zoom,
+        //                 right  click to pan
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        ///////////
+        // LIGHT //
+        ///////////
+        // create a light
+        /*	var light = new THREE.AmbientLight(0xffffff);
+         light.position.set(0, 500, 0);
+         scene.add(light);*/
+        //var ambientLight = new THREE.AmbientLight(0x111111);
+        // scene.add(ambientLight);
+        /**
+         * 设置一个桥梁部件的函数
+         * @param ksNum：桥梁的跨数
+         * @param zzNum: 每排支座数量
+         * @param qdNum: 每排桥墩的数量
+         * @param isExistHxl:是否存在横系梁 1表示存在，0表示不存在
+         * @param zzlx:0表示连续，1表示简支
+         */
+        drawBridgeWidgets(10, 4, 2, 1, 0);
+
+        //添加坐标轴
+        var axes = new THREE.AxisHelper(1000);
+        scene.add(axes);
+
+        //给各个构件添加点击事件
+        raycaster = new THREE.Raycaster();
+        renderer.setClearColor( 0xffffff );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.sortObjects = false;
+        container.appendChild(renderer.domElement);
+
+        stats = new Stats();
+        container.appendChild( stats.dom );
+
+        document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+        renderer.domElement.addEventListener('mousedown', onDocumentMouseDown, false);
+
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+        stats.update();
+
+    }
+
+
+    function render() {
+        controls.update();
+        renderer.render(scene, camera);
+
+    }
+
+    /*function animate() {
+        requestAnimationFrame(animate);
+        render();
+        update();
+    }*/
+
+    function update() {
+        // delta = change in time since last call (in seconds)
+        var delta = clock.getDelta();
+
+        // functionality provided by THREEx.KeyboardState.js
+       /* if (keyboard.pressed("1"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 1';
+        if (keyboard.pressed("2"))
+            document.getElementById('message').innerHTML = ' Have a nice day! - 2 ';*/
+
+        controls.update();
+        //stats.update();
+    }
+
+   /* function render() {
+        renderer.render(scene, camera);
+    }*/
+
+
+    function onDocumentMouseMove( event ) {
+        event.preventDefault();
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        var intersects = raycaster.intersectObjects(scene.children);
+
+        if (intersects.length > 1) {
+            var intersect = intersects[0];
+            //	alert(intersects[ 0 ].object.name);
+            // delete cube
+            //	intersects[ 0 ].object.material=new THREE.MeshLambertMaterial( { color: 0x797775 } );
+            render();
+
+        }
+    }
+
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+        mouse.set(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            var intersect = intersects[0];
+            //alert(intersects[0].object.name);
+            // delete cube
+            tempObject = intersects[0].object;
+            tempObjectMaterial = intersects[0].object.material;
+            intersects[0].object.material = new THREE.MeshBasicMaterial( { color: 0xFF311B});
+            render();
+        }
+    }
+
+
+    /**
+     * 设置一个桥梁部件的函数
+     * @param ksNum：桥梁的跨数
+     * @param zzNum: 每排支座数量
+     * @param qdNum: 每排桥墩的数量
+     * @param isExistHxl:是否存在横系梁 1表示存在，0表示不存在
+     * @param zzlx:0表示连续，1表示简支
+     */
+    function drawBridgeWidgets(ksNum, zzNum, qdNum,isExistHxl,zzlx) {
+        //X轴的长度
+        var LENGTH = 300;
+
+        //Y轴方向每次增加的长度
+        var YOFFSET = 120;
+
+        //设置左右翼班的长宽高
+        //var HALFPACEBOTTOMRADIUS = LENGTH/Math.pow(2,0.5),HALFPACETOPRADIUS =HALFPACEBOTTOMRADIUS+20, HALFPACEY = YOFFSET, HALFPACEZ = 20;
+        var LWINGX = LENGTH/4, LWINGY = YOFFSET, LWINGZ =40;
+        var RWINGX = LENGTH/4, RWINGY = YOFFSET, RWINGZ = 40;
+
+        var initLwingX=0,initLwingY=0,initLwingZ=0;
+
+        //设置翼墙的颜色
+        var wingMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+
+
+        //梯形
+        // 初始化梯形翼墙的几何形状
+        var geometry = new THREE.Geometry();
+
+        // 设置顶点位置
+        // 顶部4顶点
+        geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+        geometry.vertices.push(new THREE.Vector3(LWINGX, 0, 0));
+        geometry.vertices.push(new THREE.Vector3(LWINGX, 0, LWINGY));
+        geometry.vertices.push(new THREE.Vector3(0, 0, LWINGY));
+        // 底部4顶点
+        geometry.vertices.push(new THREE.Vector3(0, -0.5*LWINGZ, 0));
+        geometry.vertices.push(new THREE.Vector3(LWINGX, -LWINGZ, 0));
+        geometry.vertices.push(new THREE.Vector3(LWINGX, -LWINGZ, LWINGY));
+        geometry.vertices.push(new THREE.Vector3(0,-0.5*LWINGZ, LWINGY));
+
+        //设置顶点连接情况
+        //顶面
+        geometry.faces.push(new THREE.Face3(0, 3, 2));
+        geometry.faces.push(new THREE.Face3(2, 1, 0));
+        //底面
+        geometry.faces.push(new THREE.Face3(4, 5, 6));
+        geometry.faces.push(new THREE.Face3(6, 7, 4));
+        //右侧面
+        geometry.faces.push(new THREE.Face3(6, 5, 1));
+        geometry.faces.push(new THREE.Face3(1, 2, 6));
+        //左侧面
+        geometry.faces.push(new THREE.Face3(7, 3, 0));
+        geometry.faces.push(new THREE.Face3(0, 4, 7));
+        //前面
+        geometry.faces.push(new THREE.Face3(3, 7, 6));
+        geometry.faces.push(new THREE.Face3(6, 2, 3));
+        //后面
+        geometry.faces.push(new THREE.Face3(5, 4, 0));
+        geometry.faces.push(new THREE.Face3(0, 1, 5));
+        //var material = new THREE.MeshBasicMaterial({color: 0x0000FF} );
+        var cubeMaterials = new THREE.MeshFaceMaterial(wingMaterialArray);
+        var smallTrapezoid = new THREE.Mesh(geometry, cubeMaterials);
+        smallTrapezoid.position.set(initLwingX, initLwingZ, initLwingY);
+        scene.add(smallTrapezoid);
+        initLwingY += YOFFSET;
+    }
+</script>
+
+</body>
+</html>

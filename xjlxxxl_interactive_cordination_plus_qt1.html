@@ -255,41 +255,17 @@
     function drawBridgeWidgets(ksNum, zzNum, qdNum,isExistHxl,zzlx) {
         //X轴的长度
         var LENGTH = 300;
-
         //Y轴方向每次增加的长度
         var YOFFSET = 120;
-
-
-        //设置底板的长宽高
-        var BOTTOMCUBEX = LENGTH+40, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
-
-        //设置梯台翼班的长宽高
-        //var HALFPACEBOTTOMRADIUS = LENGTH/Math.pow(2,0.5),HALFPACETOPRADIUS =HALFPACEBOTTOMRADIUS+20, HALFPACEY = YOFFSET, HALFPACEZ = 20;
-        var HALFPACEX = LENGTH+40, HALFPACEY = YOFFSET, HALFPACEZ = 20;
-
-        //设置顶板的长宽高
-        var TOPCUBEX = HALFPACEX, TOPCUBEY = HALFPACEY, TOPCUBEZ = 40;
-
-        //腹板的长宽高
-        var ABDOMENX = 10, ABDOMENY = YOFFSET, ABDOMENZ = 25;
-
-        //侧墙的长宽高
-        var CQX = 10, CQY = YOFFSET, CQZ = 25;
 
         //设置墩柱的长宽高
         var TOPCYLINDERRADIUS = 20, BOTTOMCYLINDERRADIUS = 20, HEIGHT = 120;
 
-
         //设置单个桥墩的长宽高
         var SINGLEQDX = LENGTH,SINGLEQDY = TOPCYLINDERRADIUS * 2 - 10,SINGLEQDZ = HEIGHT;
 
-        //设置盖梁的长宽高
-        var GLX = BOTTOMCUBEX, GLY = TOPCYLINDERRADIUS * 2, GLZ = 10;
-
-        //设置桥头桥尾包边的长宽高
-        var QTQWX = 10, QTQWY = GLY, QTQWZ = GLZ + BOTTOMCUBEZ;
-
         //支座的长宽高
+
         if(0 == zzlx){
             var TOPZZRADIUS = 20, BOTTOMZZRADIUS = 20, ZZHEIGHT = 3;
         }else{
@@ -300,6 +276,29 @@
             BOTTOMZZRADIUS /= 2;
         }
 
+        //设置底板的长宽高（底板长度=length+墩柱直径）
+        var BOTTOMCUBEX = LENGTH+40, BOTTOMCUBEY = YOFFSET, BOTTOMCUBEZ = 20;
+
+        //设置盖梁的长宽高
+        var GLX = BOTTOMCUBEX, GLY = TOPCYLINDERRADIUS * 2, GLZ = 10;
+
+        //设置桥头桥尾包边的长宽高
+        var QTQWX = 10, QTQWY = GLY, QTQWZ = GLZ + BOTTOMCUBEZ;
+
+        //腹板的长宽高
+        var ABDOMENX = 10, ABDOMENY = YOFFSET, ABDOMENZ = 25;
+
+        //设置顶板的长宽高
+        var TOPCUBEX = BOTTOMCUBEX, TOPCUBEY = BOTTOMCUBEY, TOPCUBEZ = BOTTOMCUBEZ;
+
+        //设置左右翼班的长宽高
+        //var HALFPACEBOTTOMRADIUS = LENGTH/Math.pow(2,0.5),HALFPACETOPRADIUS =HALFPACEBOTTOMRADIUS+20, HALFPACEY = YOFFSET, HALFPACEZ = 20;
+        var LWINGX = LENGTH/4, LWINGY = YOFFSET, LWINGZ = TOPCUBEZ;
+        var RWINGX = LENGTH/4, RWINGY = YOFFSET, RWINGZ = TOPCUBEZ;
+
+        //侧墙的长宽高
+        var CQX = 10, CQY = YOFFSET, CQZ = 25;
+
         //设置横系梁的长宽高
         var HXLX = LENGTH, HXLY = 15, HXLZ = 15;
 
@@ -307,13 +306,13 @@
         var QTTSQQX =BOTTOMCUBEX, QTTSQQY = TOPCYLINDERRADIUS * 2, QTTSQQZ = HEIGHT;
 
         //桥台台身的长宽高
-        var QTTSX = 20, QTTSY = YOFFSET, QTTSZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ;
+        var QTTSX = 20, QTTSY = YOFFSET, QTTSZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ;
 
         //桥台台背长宽高
-        var QTTBX = BOTTOMCUBEX, QTTBY = TOPCYLINDERRADIUS, QTTBZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ;
+        var QTTBX = BOTTOMCUBEX, QTTBY = TOPCYLINDERRADIUS, QTTBZ = HEIGHT +ZZHEIGHT+GLZ+BOTTOMCUBEZ+ABDOMENZ;
 
         //路面
-        var LMX = TOPCUBEX, LMY = YOFFSET + QTTBY,LMZ = TOPCUBEZ;
+        var LMX = TOPCUBEX+LWINGX*2, LMY = YOFFSET + QTTBY,LMZ = TOPCUBEZ;
 
 
         //原点的Y坐标
@@ -328,30 +327,23 @@
         var initRightQttsX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - QTTSX / 2) - ORIGINALX;
 
         //左侧桥台台背初始坐标
-        var initQttbX = 0,initQttbZ = (GLZ + ZZHEIGHT+BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ) / 2;
+        var initQttbX = 0,initQttbZ = (GLZ + ZZHEIGHT+BOTTOMCUBEZ+ABDOMENZ) / 2;
 
         //路面的坐标
-        var initLmx = LENGTH / 2 - ORIGINALX,initLmZ = HEIGHT / 2 + GLZ + ZZHEIGHT + BOTTOMCUBEZ+ABDOMENZ+HALFPACEZ+LMZ / 2;
+        var initLmx = LENGTH / 2 - ORIGINALX,initLmZ = HEIGHT / 2 + GLZ + ZZHEIGHT + BOTTOMCUBEZ+ABDOMENZ+LMZ / 2;
 
         //桥墩的初始位置
         var initCylinderX = -ORIGINALX, initCylinderY = -ORIGINALY, initCylinderZ = 0;
         //设置每个桥墩之间的间隔位置
         var qdXOffset = LENGTH / (qdNum - 1);
 
-        //侧墙(比顶板要多出来)
-        var initCqX = -((TOPCUBEX+120 - LENGTH) / 2 - CQX / 2) - ORIGINALX, initCqY = YOFFSET / 2 - ORIGINALY, initCqZ = HEIGHT / 2 +CQZ/2  + TOPCUBEZ + BOTTOMCUBEZ + ABDOMENZ + GLZ + ZZHEIGHT;
+        //设置横系梁的坐标
+        var initHxlX = LENGTH / 2 - ORIGINALX, initHxlY = -ORIGINALY, initHxlZ = 0;
 
-        //顶板的初始位置
-        var initTopCubeX = LENGTH / 2 - ORIGINALX, initTopCubeY = YOFFSET / 2 - ORIGINALY, initTopCubeZ = HEIGHT / 2 + TOPCUBEZ/2/*+ HALFPACEZ*/ +ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
-
-        //梯台翼的初始位置
-        var initHalfpaceX = LENGTH / 2 - ORIGINALX-HALFPACEX/2, initHalfpaceY = YOFFSET / 2 - ORIGINALY-HALFPACEY/2, initHalfpaceZ = HEIGHT / 2 + ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
-
-        //腹板的初始位置
-        var initAbdomenX = -((BOTTOMCUBEX - LENGTH) / 2 - ABDOMENX / 2) - ORIGINALX, initAbdomenY = YOFFSET / 2 - ORIGINALY, initAbdomenZ = HEIGHT / 2 + ABDOMENZ/2 +BOTTOMCUBEZ +  + GLZ + ZZHEIGHT;
-
-        //底板的初始位置
-        var initBottomCubeX = LENGTH / 2 - ORIGINALX, initBottomCubeY = YOFFSET / 2 - ORIGINALY, initBottomCubeZ = HEIGHT / 2 + BOTTOMCUBEZ / 2 + GLZ + ZZHEIGHT;
+        //支座的坐标
+        var initZzX = -ORIGINALX, initZzY = -ORIGINALY, initZzZ = HEIGHT / 2 + GLZ + ZZHEIGHT / 2;
+        //每个支座X轴方向上的间隔距离
+        var zzXOffset = LENGTH / (zzNum - 1);
 
         //盖梁的初始位置
         var initGlX = LENGTH / 2 - ORIGINALX, initGlY = -ORIGINALY, initGlZ = HEIGHT / 2 + GLZ / 2;
@@ -359,21 +351,32 @@
         //桥头桥尾的初始位置
         var initQtqwX = -((BOTTOMCUBEX - LENGTH) / 2 + QTQWX / 2) - ORIGINALX, initQtqwY = -ORIGINALY, initQtqwZ = HEIGHT / 2 + (BOTTOMCUBEZ + GLZ) / 2;
 
-        //右侧墙跟左侧墙的X轴的坐标不一样
-        var initRightCqX = LENGTH + ((TOPCUBEX+120 - LENGTH) / 2 - CQX / 2) - ORIGINALX;
-
-        //右腹板跟左腹板的X轴的坐标不一样
-        var initRightAbdomenX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - ABDOMENX / 2) - ORIGINALX;
         //右桥头的X轴不一样
         var initRightQtqwX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 + QTQWX / 2) - ORIGINALX;
 
-        //支座的坐标
-        var initZzX = -ORIGINALX, initZzY = -ORIGINALY, initZzZ = HEIGHT / 2 + GLZ + ZZHEIGHT / 2;
-        //每个支座X轴方向上的间隔距离
-        var zzXOffset = LENGTH / (zzNum - 1);
+        //底板的初始位置
+        var initBottomCubeX = LENGTH / 2 - ORIGINALX, initBottomCubeY = YOFFSET / 2 - ORIGINALY, initBottomCubeZ = HEIGHT / 2 + BOTTOMCUBEZ / 2 + GLZ + ZZHEIGHT;
 
-        //设置横系梁的坐标
-        var initHxlX = LENGTH / 2 - ORIGINALX, initHxlY = -ORIGINALY, initHxlZ = 0;
+        //腹板的初始位置
+        var initAbdomenX = -((BOTTOMCUBEX - LENGTH) / 2 - ABDOMENX / 2) - ORIGINALX, initAbdomenY = YOFFSET / 2 - ORIGINALY, initAbdomenZ = HEIGHT / 2 + ABDOMENZ/2 +BOTTOMCUBEZ +  + GLZ + ZZHEIGHT;
+
+        //右腹板跟左腹板的X轴的坐标不一样
+        var initRightAbdomenX = LENGTH + ((BOTTOMCUBEX - LENGTH) / 2 - ABDOMENX / 2) - ORIGINALX;
+
+        //顶板的初始位置
+        var initTopCubeX = LENGTH / 2 - ORIGINALX, initTopCubeY = YOFFSET / 2 - ORIGINALY, initTopCubeZ = HEIGHT / 2 + TOPCUBEZ/2/*+ HALFPACEZ*/ +ABDOMENZ +BOTTOMCUBEZ + GLZ + ZZHEIGHT;
+
+        //侧墙(比顶板要多出来翼板的长度)
+        var initCqX = -((TOPCUBEX - LENGTH) / 2 - CQX / 2) - ORIGINALX-LWINGX, initCqY = YOFFSET / 2 - ORIGINALY, initCqZ = HEIGHT / 2 +CQZ/2  + TOPCUBEZ + BOTTOMCUBEZ + ABDOMENZ + GLZ + ZZHEIGHT;
+
+        //右侧墙跟左侧墙的X轴的坐标不一样
+        var initRightCqX = LENGTH + ((TOPCUBEX - LENGTH) / 2 - CQX / 2) - ORIGINALX+RWINGX;
+
+        //左翼墙的初始位置
+        var initLwingX=-BOTTOMCUBEX/2-LWINGX,initLwingY=YOFFSET / 2 - ORIGINALY-LWINGY/2,initLwingZ=HEIGHT / 2 + ABDOMENZ +TOPCUBEZ+BOTTOMCUBEZ + GLZ + ZZHEIGHT;
+
+        //右翼墙的初始位置
+        var initRwingX=-BOTTOMCUBEX/2-LWINGX+BOTTOMCUBEX+LWINGX,initRwingY=YOFFSET / 2 - ORIGINALY-LWINGY/2,initRwingZ=HEIGHT / 2 + ABDOMENZ +TOPCUBEZ+BOTTOMCUBEZ + GLZ + ZZHEIGHT;
 
         //设置顶板奇偶的颜色
         var topCubeMaterialArray = [];
@@ -395,17 +398,7 @@
         topCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
         topCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
 
-        //设置梯台翼的颜色
-        var hapfpaceMaterialArray = [];
-        // order to add materials: x+,x-,y+,y-,z+,z-
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
-        hapfpaceMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
-
-        //设置底板的颜色
+        //设置底板奇偶的颜色
         var bottomCubeMaterialArray = [];
         // order to add materials: x+,x-,y+,y-,z+,z-
         bottomCubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
@@ -415,17 +408,45 @@
         bottomCubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
         bottomCubeMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
 
-
-        //设置底板的颜色
+        //设置底板奇偶的颜色
         var bottomCubeMaterialArray1 = [];
         // order to add materials: x+,x-,y+,y-,z+,z-
         bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x676563}));//左右
         bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x676563}));
-        bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x0F1426}));//上下
-        bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x0F1426}));
+        bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x092026}));//上下
+        bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x092026}));
         bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));//前后
         bottomCubeMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x817F7D}));
 
+        //设置左翼墙的颜色
+        var wingMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        wingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+
+        //设置左翼墙的颜色
+        var lwingMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        lwingMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+
+        //设置右翼墙的颜色
+        var rwingMaterialArray1 = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));//左右
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));//上下
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));//前后
+        rwingMaterialArray1.push(new THREE.MeshBasicMaterial({color: 0x000000}));
 
         //设置横系梁
         var hxlMaterialArray = [];
@@ -450,7 +471,7 @@
         var lmMaterials = new THREE.MeshFaceMaterial(lmMaterialArray);
 
 
-        //设置侧墙的各部分的颜色
+        //设置左腹板的各部分的颜色
         var abdomenMaterialArray = [];
         // order to add materials: x+,x-,y+,y-,z+,z-
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
@@ -459,6 +480,24 @@
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
         abdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+        //设置左腹板的各部分的颜色
+        var labdomenMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        labdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+        //设置右腹板的各部分的颜色
+        var rabdomenMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        rabdomenMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
 
         //设置侧墙的各部分的颜色
         var cqMaterialArray = [];
@@ -469,7 +508,24 @@
         cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
         cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
         cqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
-
+        //设置左侧墙的各部分的颜色
+        var lcqMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        lcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
+        //设置右侧墙的各部分的颜色
+        var rcqMaterialArray = [];
+        // order to add materials: x+,x-,y+,y-,z+,z-
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));//左右
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x4B4A48}));
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));//上下
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x041013}));
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
+        rcqMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
 
         //设置盖梁的各部分的颜色
         var glMaterialArray = [];
@@ -481,8 +537,6 @@
         glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));
         glMaterialArray.push(new THREE.MeshBasicMaterial({color: 0x797775}));//前后
 
-        //梯台翼颜色装饰器
-        var halfpaceMaterial = new THREE.MeshLambertMaterial({color: 0x33ff33});
         //桥墩颜色装饰器
         var cylinderMaterial = new THREE.MeshLambertMaterial({color: 0x33ff33});
         //支座的颜色装饰器
@@ -554,8 +608,8 @@
 
 
                 /**==============添加桥台构件包括（桥台台帽、桥台台身前墙、桥台台身侧墙、桥台台背）==============**/
-                    //添加左侧桥台台身
-                /*var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
+                //添加左侧桥台台身
+                var cubeMaterials = new THREE.MeshFaceMaterial(cqMaterialArray);
                 var cubeGeometry = new THREE.CubeGeometry(QTTSX, QTTSZ, QTTSY, 1, 1, 1);
                 cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
                 cube.position.set(initQttsX, initQttbZ, firstQttsY);
@@ -586,7 +640,7 @@
                 cubeGeometry = new THREE.CubeGeometry(LMX, LMZ, LMY, 1, 1, 1);
                 cube = new THREE.Mesh(cubeGeometry, lmMaterials);
                 cube.position.set(initLmx, initLmZ, firstLmY);
-                scene.add(cube);*/
+                scene.add(cube);
 
                 /** ===========添加桥台构件部分结束======================================**/
 
@@ -875,7 +929,7 @@
         }
 
         /**
-         * 添加两边的腹板
+         * 添加两边的侧墙
          */
         for (var i = 0; i < ksNum; i++) {
             //添加一个左侧墙
@@ -895,6 +949,94 @@
             cube.position.set(initRightCqX, initCqZ, initCqY);
             scene.add(cube);
             initCqY += YOFFSET;
+        }
+
+        /**
+         * 添加两边的翼墙
+         */
+        for (var i = 0; i < ksNum; i++) {
+            //梯形
+            // 初始化梯形翼墙的几何形状
+            var geometry = new THREE.Geometry();
+
+            // 设置顶点位置
+            // 顶部4顶点
+            geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, 0, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, 0, LWINGY));
+            geometry.vertices.push(new THREE.Vector3(0, 0, LWINGY));
+            // 底部4顶点
+            geometry.vertices.push(new THREE.Vector3(0, -0.5*LWINGZ, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, -LWINGZ, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, -LWINGZ, LWINGY));
+            geometry.vertices.push(new THREE.Vector3(0,-0.5*LWINGZ, LWINGY));
+
+            //设置顶点连接情况
+            //顶面
+            geometry.faces.push(new THREE.Face3(0, 3, 2));
+            geometry.faces.push(new THREE.Face3(2, 1, 0));
+            //底面
+            geometry.faces.push(new THREE.Face3(4, 5, 6));
+            geometry.faces.push(new THREE.Face3(6, 7, 4));
+            //右侧面
+            geometry.faces.push(new THREE.Face3(6, 5, 1));
+            geometry.faces.push(new THREE.Face3(1, 2, 6));
+            //左侧面
+            geometry.faces.push(new THREE.Face3(7, 3, 0));
+            geometry.faces.push(new THREE.Face3(0, 4, 7));
+            //前面
+            geometry.faces.push(new THREE.Face3(3, 7, 6));
+            geometry.faces.push(new THREE.Face3(6, 2, 3));
+            //后面
+            geometry.faces.push(new THREE.Face3(5, 4, 0));
+            geometry.faces.push(new THREE.Face3(0, 1, 5));
+            //var material = new THREE.MeshBasicMaterial({color: 0x0000FF} );
+            var cubeMaterials = new THREE.MeshFaceMaterial(wingMaterialArray);
+            var smallTrapezoid = new THREE.Mesh(geometry, cubeMaterials);
+            smallTrapezoid.position.set(initLwingX, initLwingZ, initLwingY);
+            scene.add(smallTrapezoid);
+            initLwingY += YOFFSET;
+
+            // 初始化梯形右翼墙的几何形状
+            var geometry = new THREE.Geometry();
+
+            // 设置顶点位置
+            // 顶部4顶点
+            geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, 0, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, 0, LWINGY));
+            geometry.vertices.push(new THREE.Vector3(0, 0, LWINGY));
+            // 底部4顶点
+            geometry.vertices.push(new THREE.Vector3(0, -LWINGZ, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, -0.5*LWINGZ, 0));
+            geometry.vertices.push(new THREE.Vector3(LWINGX, -0.5*LWINGZ, LWINGY));
+            geometry.vertices.push(new THREE.Vector3(0,-LWINGZ, LWINGY));
+
+            //设置顶点连接情况
+            //顶面
+            geometry.faces.push(new THREE.Face3(0, 3, 2));
+            geometry.faces.push(new THREE.Face3(2, 1, 0));
+            //底面
+            geometry.faces.push(new THREE.Face3(4, 5, 6));
+            geometry.faces.push(new THREE.Face3(6, 7, 4));
+            //右侧面
+            geometry.faces.push(new THREE.Face3(6, 5, 1));
+            geometry.faces.push(new THREE.Face3(1, 2, 6));
+            //左侧面
+            geometry.faces.push(new THREE.Face3(7, 3, 0));
+            geometry.faces.push(new THREE.Face3(0, 4, 7));
+            //前面
+            geometry.faces.push(new THREE.Face3(3, 7, 6));
+            geometry.faces.push(new THREE.Face3(6, 2, 3));
+            //后面
+            geometry.faces.push(new THREE.Face3(5, 4, 0));
+            geometry.faces.push(new THREE.Face3(0, 1, 5));
+            //var material = new THREE.MeshBasicMaterial({color: 0x0000FF} );
+            var cubeMaterials = new THREE.MeshFaceMaterial(wingMaterialArray);
+            var smallTrapezoid = new THREE.Mesh(geometry, cubeMaterials);
+            smallTrapezoid.position.set(initRwingX, initRwingZ, initRwingY);
+            scene.add(smallTrapezoid);
+            initRwingY += YOFFSET;
         }
 
 
